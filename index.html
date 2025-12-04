@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aufmaß Allgemein</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    .card {
+        background: white; padding: 15px; border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15); margin-bottom: 20px;
+    }
+    label { font-weight: bold; display: block; margin-top: 10px; }
+    input, textarea, select {
+        width: 100%; padding: 8px; margin-top: 5px;
+        border: 1px solid #ccc; border-radius: 5px;
+    }
+    table {
+        width: 100%; border-collapse: collapse; margin-top: 10px;
+    }
+    th, td {
+        border: 1px solid #ccc; padding: 8px; text-align: left;
+    }
+    th { background: #e1e1e1; }
+    button {
+        padding: 10px 15px; border: none; border-radius: 5px;
+        margin: 5px 0; cursor: pointer; font-size: 15px;
+    }
+    .add-btn { background: #007bff; color: white; }
+    .delete-btn { background: #d9534f; color: white; }
+    .pdf-btn { background: #5cb85c; color: white; }
+</style>
+</head>
+<body>
+
+<h1>Aufmaß – Allgemein</h1>
+
+<div class="card">
+    <h2>Kopfdaten</h2>
+    <label>Kunde</label>
+    <input id="kunde">
+
+    <label>Objekt</label>
+    <input id="objekt">
+
+    <label>Datum</label>
+    <input type="date" id="datum">
+
+    <label>Ansprechpartner</label>
+    <input id="ansprechpartner">
+
+    <label>Bemerkungen</label>
+    <textarea id="bemerkungen" rows="3"></textarea>
+</div>
+
+<div class="card">
+    <h2>Artikel-Liste</h2>
+
+    <table id="artikelTabelle">
+        <thead>
+            <tr>
+                <th>Anzahl</th>
+                <th>Artikelnummer</th>
+                <th>Artikel</th>
+                <th>Bemerkung</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button class="add-btn" onclick="addRow()">+ Neue Zeile hinzufügen</button>
+</div>
+
+<div class="card">
+    <button class="pdf-btn" onclick="window.print()">📄 PDF drucken</button>
+    <button class="delete-btn" onclick="clearAll()">🗑 Alles löschen</button>
+</div>
+
+<script>
+// Zeile hinzufügen
+function addRow() {
+    const tbody = document.querySelector("#artikelTabelle tbody");
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td><input type="number" min="1" value="1"></td>
+        <td><input></td>
+        <td><input></td>
+        <td><input></td>
+    `;
+
+    tbody.appendChild(row);
+    saveData();
+}
+
+// Alles löschen
+function clearAll() {
+    document.querySelector("#kunde").value = "";
+    document.querySelector("#objekt").value = "";
+    document.querySelector("#datum").value = "";
+    document.querySelector("#ansprechpartner").value = "";
+    document.querySelector("#bemerkungen").value = "";
+    document.querySelector("#artikelTabelle tbody").innerHTML = "";
+    localStorage.removeItem("aufmass_allgemein");
+}
+
+// Autospeichern
+document.querySelectorAll("input, textarea").forEach(el => {
+    el.addEventListener("input", saveData);
+});
+
+function saveData() {
+    const data = {
+        kunde: kunde.value,
+        objekt: objekt.value,
+        datum: datum.value,
+        ansprechpartner: ansprechpartner.value,
+        bemerkungen: bemerkungen.value,
+        artikel: []
+    };
+
+    document.querySelectorAll("#artikelTabelle tbody tr").forEach(tr => {
+        const tds = tr.querySelectorAll("td input");
+        data.artikel.push({
+            menge: tds[0].value,
+            nummer: tds[1].value,
+            artikel: tds[2].value,
+            bemerkung: tds[3].value
+        });
+    });
+
+    localStorage.setItem("aufmass_allgemein", JSON.stringify(data));
+}
+
+// gespeicherte Daten laden
+function loadData() {
+    const data = JSON.parse(localStorage.getItem("aufmass_allgemein"));
+    if (!data) return;
+
+    kunde.value = data.kunde || "";
+    objekt.value = data.objekt || "";
+    datum.value = data.datum || "";
+    ansprechpartner.value = data.ansprechpartner || "";
+    bemerkungen.value = data.bemerkungen || "";
+
+    const tbody = document.querySelector("#artikelTabelle tbody");
+    tbody.innerHTML = "";
+
+    data.artikel.forEach(item => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td><input type="number" value="${item.menge}"></td>
+            <td><input value="${item.nummer}"></td>
+            <td><input value="${item.artikel}"></td>
+            <td><input value="${item.bemerkung}"></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Beim Laden sofort Daten wiederherstellen
+loadData();
+</script>
+
+</body>
+</html>
